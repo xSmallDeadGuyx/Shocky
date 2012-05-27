@@ -16,6 +16,7 @@ import javax.script.ScriptException;
 import org.pircbotx.Channel;
 import org.pircbotx.PircBotX;
 import org.pircbotx.User;
+
 import pl.shockah.StringTools;
 import pl.shockah.shocky.Module;
 import pl.shockah.shocky.Shocky;
@@ -36,14 +37,13 @@ public class ModuleJavaScript extends Module {
 
 	public String parse(final PircBotX bot, EType type, Channel channel, User sender, String code) {
 		if (code == null) return "";
-		
+
 		ScriptEngineManager mgr = new ScriptEngineManager();
 		ScriptEngine engine = mgr.getEngineByName("JavaScript");
-		
+
 		engine.put("channel", channel.getName());
-		engine.put("bot", bot.getNick());
 		engine.put("sender", sender.getNick());
-		
+
 		Sandbox sandbox = new Sandbox(channel.getUsers().toArray(new User[0]));
 		engine.put("bot", sandbox);
 
@@ -52,21 +52,21 @@ public class ModuleJavaScript extends Module {
 		String output = null;
 		final ExecutorService service = Executors.newFixedThreadPool(1);
 		try {
-		    Future<String> f = service.submit(r);
-		    output = f.get(30, TimeUnit.SECONDS);
+			Future<String> f = service.submit(r);
+			output = f.get(30, TimeUnit.SECONDS);
 		}
 		catch(TimeoutException e) {
-		    output = "Script timed out";
+			output = "Script timed out";
 		}
 		catch(Exception e) {
-		    throw new RuntimeException(e);
+			throw new RuntimeException(e);
 		}
 		finally {
-		    service.shutdown();
+			service.shutdown();
 		}
 		if (output == null || output.isEmpty())
 			return null;
-		
+
 		StringBuilder sb = new StringBuilder();
 		for(String line : output.split("\n")) {
 			if (sb.length() != 0) sb.append(" | ");
@@ -98,49 +98,49 @@ public class ModuleJavaScript extends Module {
 				Shocky.send(bot,type,channel,sender,output);
 		}
 	}
-	
+
 	public class Sandbox {
 		private Random rnd = new Random();
 		private final User[] users;
-		
+
 		public Sandbox(User[] users) {
 			this.users = users;
 		}
-		
+
 		public String randnick() {
 			return users[rnd.nextInt(users.length)].getNick();
 		}
-		
+
 		public String format(String format, Object... args) {
 			return String.format(format, args);
 		}
-		
+
 		public String munge(String in) {
 			return Utils.mungeNick(in);
 		}
-		
+
 		public String odd(String in) {
 			return Utils.odd(in);
 		}
-		
+
 		public String flip(String in) {
 			return Utils.flip(in);
 		}
-		
+
 		public String reverse(String in) {
 			return new StringBuilder(in).reverse().toString();
 		}
-		
+
 		public String toString() {
 			return "Yes it is a bot";
 		}
 	}
-	
+
 	public class JSRunner implements Callable<String> {
-		
+
 		private final ScriptEngine engine;
 		private final String code;
-		
+
 		public JSRunner(ScriptEngine e, String c) {
 			engine = e;
 			code = c;
@@ -153,7 +153,7 @@ public class ModuleJavaScript extends Module {
 			ScriptContext context = engine.getContext();
 			context.setWriter(pw);
 			context.setErrorWriter(pw);
-			
+
 			try {
 				Object out = engine.eval(code);
 				if (sw.getBuffer().length() != 0)
@@ -166,6 +166,5 @@ public class ModuleJavaScript extends Module {
 			}
 			return null;
 		}
-		
 	}
 }
